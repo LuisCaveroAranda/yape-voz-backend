@@ -20,10 +20,20 @@ def _load_env(path):
 # ej. PowerShell:  $env:ENV_FILE=".env.neon"; python manage.py migrate
 _load_env(BASE_DIR / os.environ.get("ENV_FILE", ".env"))
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insegura-solo-local")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
-# En local los celulares entran por la IP de la PC; en producción poner el dominio.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insegura-solo-local" if DEBUG else "")
+if not SECRET_KEY:
+    raise RuntimeError("Falta DJANGO_SECRET_KEY (obligatoria con DJANGO_DEBUG=0)")
+
+# En local los celulares entran por la IP de la PC; en Render: DJANGO_ALLOWED_HOSTS=.onrender.com
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+
+# Para el panel /admin detrás de HTTPS (Render): ej. https://yape-voz-backend.onrender.com
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o
+]
+# Render termina el HTTPS en su proxy y reenvía por HTTP con este header
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "daphne",  # debe ir primero: hace que runserver sirva también WebSockets
@@ -43,6 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # debe ir antes de CommonMiddleware
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sirve el CSS del /admin en producción
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -110,6 +121,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # python manage.py collectstatic (en el build de Render)
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGGING = {

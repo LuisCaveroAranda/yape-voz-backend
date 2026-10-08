@@ -31,7 +31,15 @@ Autenticación: header `Authorization: Token <token>`.
 | DELETE | `/api/oyentes/<id>/` | Quita un oyente |
 | GET | `/api/escucho/` | Usuarios cuyos pagos escucho |
 | GET | `/api/escucho/<username>/pagos/` | Historial y total de hoy (si me dio permiso) |
+| GET | `/api/pagos/` | Mis pagos y total de hoy |
 | POST | `/api/pagos/` | `{id_local, remitente, monto, fecha}` registra un pago (no duplica por `id_local`) |
+
+## Despliegue en Render
+- **Build Command:** `./build.sh`
+- **Start Command:** `daphne -b 0.0.0.0 -p $PORT yape_backend.asgi:application`
+- **Variables de entorno:** `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`,
+  `DJANGO_ALLOWED_HOSTS=.onrender.com`, `DJANGO_CSRF_TRUSTED_ORIGINS=https://<app>.onrender.com`,
+  `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT=5432`, `DB_SSLMODE=require`
 
 ### WebSocket
 `ws://<servidor>/ws/pagos/?token=<token>` — recibe

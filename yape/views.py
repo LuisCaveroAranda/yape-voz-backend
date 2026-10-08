@@ -115,23 +115,29 @@ def pagos_de_emisor(request, username):
     )
     if not relacion.ver_historial:
         raise PermissionDenied(f"{relacion.emisor.username} no comparte su historial.")
-
-    pagos = Pago.objects.filter(emisor=relacion.emisor)
-    hoy = timezone.localdate()
-    total_hoy = pagos.filter(fecha__date=hoy).aggregate(t=Sum("monto"))["t"] or Decimal("0")
-    return Response(
-        {
-            "total_hoy": str(total_hoy),
-            "pagos": PagoSerializer(pagos[:100], many=True).data,
-        }
-    )
+    return Response(_resumen_pagos(relacion.emisor))
 
 
 # ── Pagos que sube el celular emisor ──────────────────────────────────────────
 
 
-@api_view(["POST"])
-def crear_pago(request):
+def _resumen_pagos(emisor):
+    """Total de hoy + últimos 100 pagos de `emisor`."""
+    pagos = Pago.objects.filter(emisor=emisor)
+    hoy = timezone.localdate()
+    total_hoy = pagos.filter(fecha__date=hoy).aggregate(t=Sum("monto"))["t"] or Decimal("0")
+    return {
+        "total_hoy": str(total_hoy),
+        "pagos": PagoSerializer(pagos[:100], many=True).data,
+    }
+
+
+@api_view(["GET", "POST"])
+def pagos(request):
+    """GET: mis pagos (pantalla de inicio). POST: el celular sube un pago detectado."""
+    if request.method == "GET":
+        return Response(_resumen_pagos(request.user))
+
     s = PagoSerializer(data=request.data)
     # El celular puede reenviar el mismo pago (reintentos): si ya existe, no se duplica
     # ni se vuelve a avisar.

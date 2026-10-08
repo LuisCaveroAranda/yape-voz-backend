@@ -9,5 +9,5 @@ urlpatterns = [
     path("oyentes/<int:pk>/", views.OyenteDetail.as_view()),
     path("escucho/", views.EmisorList.as_view()),
     path("escucho/<str:username>/pagos/", views.pagos_de_emisor),
-    path("pagos/", views.crear_pago),
+    path("pagos/", views.pagos),
 ]
