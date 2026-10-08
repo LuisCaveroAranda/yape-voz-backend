@@ -16,7 +16,9 @@ def _load_env(path):
         os.environ.setdefault(key.strip(), value.strip())
 
 
-_load_env(BASE_DIR / ".env")
+# ENV_FILE permite usar otra configuración sin tocar .env,
+# ej. PowerShell:  $env:ENV_FILE=".env.neon"; python manage.py migrate
+_load_env(BASE_DIR / os.environ.get("ENV_FILE", ".env"))
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insegura-solo-local")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
